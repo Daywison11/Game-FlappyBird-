@@ -103,19 +103,80 @@ const bg = {
         
     }
 }
+const mensagemGetReady = {
+    spriteX: 134,
+    spritey: 0,
+    largura: 174,
+    altura: 152,
+    Xcanvas: (canvas.width / 2) - 174 / 2,
+    Ycanvas: 50,
+
+    //desenhando o bird
+    desenha(){
+        contexto.drawImage(
+            sprites,
+            mensagemGetReady.spriteX, mensagemGetReady.spritey, //sprite x e y
+            mensagemGetReady.largura, mensagemGetReady.altura, //tamanho do recorte na imagem,
+            mensagemGetReady.Xcanvas,  mensagemGetReady.Ycanvas,// posicionamento no canvas
+            mensagemGetReady.largura, mensagemGetReady.altura // tamanho no canvas
+        );
+    }
+}
+
+//
+// TELAS
+//
+
+let telaAtiva = {}
+function mudaParaTela(novaTela){
+    telaAtiva = novaTela;
+}
+
+const Telas = {
+    Inicio: {
+        desenha() {
+             bg.desenha();
+            flappyBird.desenha();
+            chao.desenha();
+            mensagemGetReady.desenha();
+        },
+        click() {
+            mudaParaTela(Telas.Jogo)
+        },
+        atualiza() {
+            
+        }
+    }
+};
+
+Telas.Jogo = {
+    desenha() {
+        //chamando função de desenhar
+        bg.desenha();
+        flappyBird.desenha();
+        chao.desenha();
+    },
+    atualiza() {
+        flappyBird.atualiza();
+    }
+}
 
 
 //função para renderizar infinitamente
 function loop() {
     
-    //chamando função de desenhar
-    bg.desenha();
-    flappyBird.desenha();
-    flappyBird.atualiza();
-    chao.desenha();
+    telaAtiva.desenha();
+    telaAtiva.atualiza();
 
     //fica criando a animação infinita
     requestAnimationFrame(loop);
 }
 
+window.addEventListener('click', function () {
+    if (telaAtiva.click) {
+        telaAtiva.click();
+    }
+})
+
+mudaParaTela(Telas.Inicio)
 loop()
