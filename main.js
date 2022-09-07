@@ -70,7 +70,7 @@ function criaFlappyBird() {
             // aqui ele divide o frame por 10 então toda vez que o frame chegar no valo intervalo de frames ele vai retornar para zero
             // e toda vez que chgar no zero ele altera a sprite e assim por diante
             const passoIntervalo = frames % intervaloDeFrames == 0;
-            console.log(passoIntervalo);
+            
 
             if (passoIntervalo) {
                 
@@ -183,6 +183,126 @@ const bg = {
         
     }
 }
+
+function criaCanos() {
+    const canos = {    
+        largura: 52,
+        altura: 400,
+        chao: {
+            //posição da sprite(imagens com os itens)
+            spriteX: 0,
+            spriteY: 169
+        },
+        ceu: {
+            //posição da sprite(imagens com os itens)
+            spriteX: 52,
+            spriteY: 169,
+        },
+        espaco: 80,
+        desenha() {
+            //vai sempre desenhar oo par de canos com os valores pegados do par
+            // que também e gerado dinamicamente
+            canos.pares.forEach(function (par) {
+                //pega o valor aleatorio degrado pelo parY e desenha no canvas com essa altura
+                const Yrandom = par.y;
+    
+                const espaçamentoEntreCanos = 90;
+                //[cano do Céu]
+                
+                //posição dos canos no canvas
+                const canoCeuX = par.x;
+                const canoCeuY = Yrandom;
+                
+                contexto.drawImage(
+                    sprites,
+                    canos.ceu.spriteX, canos.ceu.spriteY,
+                    canos.largura, canos.altura,
+                    canoCeuX, canoCeuY,
+                    canos.largura, canos.altura,
+                );
+
+
+                //[CANO DO CHÃO]
+                //posição dos canos no canvas
+                const canoChaoX = par.x;
+                const canoChaoY = canos.altura + espaçamentoEntreCanos + Yrandom ;
+                contexto.drawImage(
+                    sprites,
+                    canos.chao.spriteX, canos.chao.spriteY,
+                    canos.largura, canos.altura,
+                    canoChaoX, canoChaoY,
+                    canos.largura, canos.altura,
+                )
+                
+                //define qual e a  posição X e Y do no canvas para depois podermos caucular a colizão de acordo com a posilçao dos canos
+                par.canoCeu = {
+                    x: canoCeuX,
+                    y: canos.altura + canoCeuY
+                }
+                par.canoChao = {
+                    x: canoChaoX,
+                    y: canoChaoY
+                }
+
+            })
+        },
+
+        //valida se o flappy esta atigindo a area dos canos de cima e de baixo,
+        //se colidir ele retorna true, iformando que ouve uma colisão
+        temColisaoComFlappyBird(par) {
+            const cabeçaDoFlappy = globais.flappyBird.Ycanvas;
+            const pedoFlappy = globais.flappyBird.Ycanvas + globais.flappyBird.altura;
+
+            if (globais.flappyBird.Xcanvas >= par.x) {
+                if (cabeçaDoFlappy <= par.canoCeu.y) {
+                    return true
+                }
+                if (pedoFlappy >= par.canoChao.y) {
+                    return true
+                }
+            }
+        },
+        pares: [],
+        atualiza() {
+            //vai gerar os canos em uma altura aleatoria com base no 150m,
+            //dessa forma a altura vai ser sempre maior ou menor que o 150
+            const passou100frames = frames % 100 === 0;
+            if (passou100frames) {
+                //adiciona dentro de paras a cada 100frames um novo cano com uma medida diferente da anterios, dessa forma vai adicionar infinitamente canos
+                canos.pares.push(
+                    {
+                        x: canvas.width,
+                        y: -150 * (Math.random() + 1),
+                    }
+                )
+            }
+
+            canos.pares.forEach(function (par) { 
+                
+                //faz os movimentos dos canos de dois em dois da largura
+                par.x = par.x - 2;
+
+                if (canos.temColisaoComFlappyBird(par)) {
+                    mudaParaTela(Telas.Inicio)
+                }
+
+                //deleta os canos quando chegarem no final da tela
+                if (par.x + canos.largura <= 0) {
+                    canos.pares.shift();
+                }
+            })
+        }
+
+
+
+
+    }
+    return canos
+}
+
+
+
+
 const mensagemGetReady = {
     spriteX: 134,
     spritey: 0,
@@ -220,12 +340,14 @@ function mudaParaTela(novaTela){
 const Telas = {
     Inicio: {
         Inicializa() {
-            globais.flappyBird = criaFlappyBird()
-            globais.chao = criaChao()
+            globais.flappyBird = criaFlappyBird();
+            globais.chao = criaChao();
+            globais.canos = criaCanos();
         },
         desenha() {
             bg.desenha();
             globais.flappyBird.desenha();
+            
             globais.chao.desenha();
             mensagemGetReady.desenha();
         },
@@ -243,6 +365,7 @@ Telas.Jogo = {
         //chamando função de desenhar
         bg.desenha();
         globais.flappyBird.desenha();
+        globais.canos.desenha();
         globais.chao.desenha();
     },
     click() {
@@ -250,6 +373,8 @@ Telas.Jogo = {
     },
     atualiza() {
         globais.flappyBird.atualiza();
+        globais.canos.atualiza()
+        globais.chao.atualiza();
     }
 }
 
