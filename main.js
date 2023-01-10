@@ -5,6 +5,8 @@ let frames = 0
 const somHit = new Audio();
 somHit.src = './efeitos/efeitos_hit.wav'
 
+const somPulo = new Audio();
+somPulo.src = './efeitos/efeitos_pulo.wav'
 
 //criando url da image
 const sprites = new Image();
@@ -41,16 +43,15 @@ function criaFlappyBird() {
         velocidade: 0,
         pulo: 4.6,
         pula() {
-            flappyBird.velocidade = - flappyBird.pulo
+            flappyBird.velocidade = -flappyBird.pulo
+            somPulo.play()
         },
 
         atualiza() {
             if (fazcColisao(flappyBird, globais.chao)) {
                 console.log('fez colisao')
                 somHit.play();
-                setTimeout(() => {
-                    mudaParaTela(Telas.Inicio);
-                },500)
+                    mudaParaTela(Telas.GAME_OVER);
                 return
             }
 
@@ -253,7 +254,7 @@ function criaCanos() {
             const cabeçaDoFlappy = globais.flappyBird.Ycanvas;
             const pedoFlappy = globais.flappyBird.Ycanvas + globais.flappyBird.altura;
 
-            if (globais.flappyBird.Xcanvas >= par.x) {
+            if ((globais.flappyBird.Xcanvas +globais.flappyBird.largura) >= par.x) {
                 if (cabeçaDoFlappy <= par.canoCeu.y) {
                     return true
                 }
@@ -283,7 +284,8 @@ function criaCanos() {
                 par.x = par.x - 2;
 
                 if (canos.temColisaoComFlappyBird(par)) {
-                    mudaParaTela(Telas.Inicio)
+                    somHit.play();
+                    mudaParaTela(Telas.GAME_OVER)
                 }
 
                 //deleta os canos quando chegarem no final da tela
@@ -322,6 +324,28 @@ const mensagemGetReady = {
         );
     }
 }
+//mensagem GameOver
+
+const mensagemGameOver = {
+    spriteX: 134,
+    spritey: 153,
+    largura: 226,
+    altura: 200,
+    Xcanvas: (canvas.width / 2) - 226 / 2,
+    Ycanvas: 50,
+
+    //desenhando o bird
+    desenha(){
+        contexto.drawImage(
+            sprites,
+            mensagemGameOver.spriteX, mensagemGameOver.spritey, //sprite x e y
+            mensagemGameOver.largura, mensagemGameOver.altura, //tamanho do recorte na imagem,
+            mensagemGameOver.Xcanvas,  mensagemGameOver.Ycanvas,// posicionamento no canvas
+            mensagemGameOver.largura, mensagemGameOver.altura // tamanho no canvas
+        );
+    }
+}
+
 
 //
 // TELAS
@@ -335,6 +359,31 @@ function mudaParaTela(novaTela){
     if (telaAtiva.Inicializa) {
         telaAtiva.Inicializa();
     }
+}
+
+function criaPlacar() {
+    
+    const placar = {
+        pontuacao: 0, 
+        desenha() {
+            contexto.font = '35px VT323';
+            contexto.textAlign = 'right'
+            contexto.fillStyle = 'white'
+            contexto.fillText(`Pontos ${placar.pontuacao}`, canvas.width - 10 , 35);
+        },
+        atualiza() {         
+            const intervaloDeFrames = 40;
+            const passouOInstervalo = frames % intervaloDeFrames === 0;
+
+            if (passouOInstervalo) {
+                
+                placar.pontuacao = placar.pontuacao + 1 
+            }
+         }
+        
+    }
+
+    return placar
 }
 
 const Telas = {
@@ -361,12 +410,17 @@ const Telas = {
 };
 
 Telas.Jogo = {
+    Inicializa() {
+        globais.placar = criaPlacar();
+    },
+
     desenha() {
         //chamando função de desenhar
         bg.desenha();
         globais.flappyBird.desenha();
         globais.canos.desenha();
         globais.chao.desenha();
+        globais.placar.desenha();
     },
     click() {
         globais.flappyBird.pula()
@@ -375,9 +429,21 @@ Telas.Jogo = {
         globais.flappyBird.atualiza();
         globais.canos.atualiza()
         globais.chao.atualiza();
+        globais.placar.atualiza();
     }
 }
 
+Telas.GAME_OVER = {
+    desenha(){
+        mensagemGameOver.desenha();
+    },
+    atualiza(){
+
+    },
+    click(){
+        mudaParaTela(Telas.Inicio)
+    }
+}
 
 //função para renderizar infinitamente
 function loop() {
